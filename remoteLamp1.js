@@ -9,6 +9,32 @@ let myGrey;
 let toggleState = false;   // false = OFF, true = ON
 let lightConfirm = 0;
 
+// -----------------------------------------
+// MQTT CLIENT SETUP (PLACE THIS HERE)
+// -----------------------------------------
+
+const client = mqtt.connect("wss://h2818280.ala.asia-southeast1.emqxsl.com:8084/mqtt", {
+  username: "paddiaddison2016@gmail.com",
+  password: "emqPad!91065",
+  clientId: "web-ui-" + Math.random().toString(16).substr(2, 8)
+});
+
+client.on("connect", () => {
+  console.log("MQTT connected");
+  client.subscribe("test/esp32/out");
+});
+
+client.on("message", (topic, payload) => {
+  const data = JSON.parse(payload.toString());
+  console.log("MQTT update:", data);
+
+  if (data.faderValue !== undefined) {
+    faderValue = data.faderValue;
+
+    // Update handle position so UI moves smoothly
+    handleY = map(faderValue, 0, 100, trackBottom, trackTop);
+  }
+});
 
 
 function setup() {
