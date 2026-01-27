@@ -73,16 +73,23 @@ function setup() {
 
   // Click handler
   toggleBox.addEventListener("click", () => {
-    toggleState = !toggleState;
+  toggleState = !toggleState;
 
-    if (toggleState) {
-      toggleBox.style.background = myOliveGreen.toString();
-      toggleBox.textContent = "ON";
-    } else {
-      toggleBox.style.background = myGrey;
-      toggleBox.textContent = "OFF";
-    }
-  });
+  // Update UI appearance
+  if (toggleState) {
+    toggleBox.style.background = myOliveGreen.toString();
+    toggleBox.textContent = "ON";
+  } else {
+    toggleBox.style.background = myGrey;
+    toggleBox.textContent = "OFF";
+  }
+
+  // Publish toggle state to ESP32
+  client.publish("test/esp32/in", JSON.stringify({
+    toggleState: toggleState
+  }));
+});
+
 }
 
 function draw() {
