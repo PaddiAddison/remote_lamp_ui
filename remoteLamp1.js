@@ -1,3 +1,6 @@
+console.log("remoteLamp1.js is running");
+
+
 let faderValue = 50;
 let handleY;
 let trackTop = 83;

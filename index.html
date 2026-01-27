@@ -2,42 +2,42 @@
 <html>
   <head>
     <meta charset="UTF-8">
+
+    <title>Remote Lamp</title>
+
+    <!-- Icons -->
     <link rel="icon" href="favicon.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Remote Lamp</title>
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
 
-
+    <!-- Mobile behaviour -->
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0,
                    maximum-scale=1.0, user-scalable=no">
 
+    <!-- Your styles -->
     <link rel="stylesheet" href="style.css">
 
-    <!-- noUiSlider (unused now but harmless) -->
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.1/nouislider.min.js"></script>
+    <!-- MQTT client -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
     <!-- p5.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
   </head>
 
-  <body><br>
+  <body>
     <div id="sketch-container">
-
-      <!-- Background fader slot -->
-      <div id="fader-container"></div>
 
       <!-- UI boxes -->
       <div id="value-display" class="ui-box"></div>
       <div id="lightConfirm-display" class="ui-box"></div>
       <div id="toggleButton-display" class="ui-box"></div>
 
-      <!-- Debug grid overlay -->
+      <!-- Optional debug overlay -->
       <div id="tempGrid-display"></div>
 
     </div>
 
-    <script src="remoteLamp1.js"></script>
+    <!-- Your UI logic -->
+    <script src="remoteLamp1.js?v=2"></script>
   </body>
 </html>
