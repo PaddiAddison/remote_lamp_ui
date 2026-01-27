@@ -151,6 +151,10 @@ function mousePressed() {
 
 function mouseReleased() {
   dragging = false;
+  client.publish("test/esp32/in", JSON.stringify({
+  faderValue: faderValue
+}));
+
 }
 
 function touchStarted() {
@@ -160,6 +164,10 @@ function touchStarted() {
 
 function touchEnded() {
   dragging = false;
+  client.publish("test/esp32/in", JSON.stringify({
+  faderValue: faderValue
+}));
+
 }
 
 function startDrag(x, y) {
