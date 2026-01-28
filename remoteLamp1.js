@@ -40,7 +40,7 @@ function flashGreen() {
 
 function flashRed() {
   const led = document.getElementById("heartbeat-led");
-  led.style.background = "rgb(200, 0, 0)";
+  led.style.background = "rgb(255, 63, 63)";
   setTimeout(() => led.style.background = "rgb(80, 80, 80)", 200);
 }
 
