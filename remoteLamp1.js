@@ -31,6 +31,14 @@ setInterval(() => {
 
 }, 1000);
 
+setInterval(() => {
+  const now = performance.now();
+  if (now - lastHeartbeatTime > 5000) {
+    flashHeartbeatRed();
+  }
+}, 1000);
+
+
 
 // ------------------------------------------------------
 // MQTT CLIENT SETUP
@@ -114,10 +122,11 @@ client.on("message", (topic, payload) => {
   const text = payload.toString();
   console.log("RAW MQTT:", text);
 
-  if (data.heartbeat !== undefined) {
+ if (data.heartbeat !== undefined) {
+    lastHeartbeatTime = performance.now();
     flashHeartbeatGreen();
-    lastHeartbeatTime = millis();
 }
+
 
 
   try {
