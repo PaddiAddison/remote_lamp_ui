@@ -1,4 +1,4 @@
-console.log("remoteLamp1.js is running");
+console.log("remoteLamp1.js running with ESP32 JSON heartbeat");
 
 // ------------------------------------------------------
 // UI + Fader Variables
@@ -14,31 +14,11 @@ let myGrey;
 let toggleState = false;
 let lightConfirm = 0;
 
-// Heartbeat timer
-let heartbeatTimer = null;
-let lastHeartbeatTime = 0;
-
 // ------------------------------------------------------
-// HEARTBEAT TIMEOUT CHECK (runs every second)
+// HEARTBEAT STATE
 // ------------------------------------------------------
-setInterval(() => {
-  const now = performance.now();
-
-  // If no heartbeat received for > 5 seconds → ESP32 offline
-  if (now - lastHeartbeatTime > 5000) {
-    flashHeartbeatRed();
-  }
-
-}, 1000);
-
-setInterval(() => {
-  const now = performance.now();
-  if (now - lastHeartbeatTime > 5000) {
-    flashHeartbeatRed();
-  }
-}, 1000);
-
-
+let lastHeartbeatTime = 0;   // updated ONLY when ESP32 sends heartbeat
+const HEARTBEAT_TIMEOUT = 5000; // ms
 
 // ------------------------------------------------------
 // MQTT CLIENT SETUP
@@ -50,22 +30,18 @@ const client = mqtt.connect("wss://h2818280.ala.asia-southeast1.emqxsl.com:8084/
 });
 
 // ------------------------------------------------------
-// HEARTBEAT LED FUNCTIONS
+// LED FLASH FUNCTIONS
 // ------------------------------------------------------
-function flashHeartbeatGreen() {
+function flashGreen() {
   const led = document.getElementById("heartbeat-led");
   led.style.background = "rgb(0, 200, 0)";
-  setTimeout(() => {
-    led.style.background = "rgb(80, 80, 80)";
-  }, 120);
+  setTimeout(() => led.style.background = "rgb(80, 80, 80)", 120);
 }
 
-function flashHeartbeatRed() {
+function flashRed() {
   const led = document.getElementById("heartbeat-led");
   led.style.background = "rgb(200, 0, 0)";
-  setTimeout(() => {
-    led.style.background = "rgb(80, 80, 80)";
-  }, 200);
+  setTimeout(() => led.style.background = "rgb(80, 80, 80)", 200);
 }
 
 // ------------------------------------------------------
@@ -74,74 +50,76 @@ function flashHeartbeatRed() {
 client.on("connect", () => {
   console.log("MQTT connected");
   client.subscribe("test/esp32/out");
-
-  // Start heartbeat only when connected
-  heartbeatTimer = setInterval(() => {
-    client.publish("test/esp32/in", JSON.stringify({ heartbeat: true }));
-    flashHeartbeatGreen();
-  }, 2000);
+  client.subscribe("test/esp32/status");   // LWT online/offline
 });
 
 client.on("close", () => {
   console.log("MQTT connection closed");
-
-  if (heartbeatTimer) {
-    clearInterval(heartbeatTimer);
-    heartbeatTimer = null;
-  }
-
-  flashHeartbeatRed();
+  flashRed();
 });
 
 client.on("offline", () => {
   console.log("MQTT offline");
-
-  if (heartbeatTimer) {
-    clearInterval(heartbeatTimer);
-    heartbeatTimer = null;
-  }
-
-  flashHeartbeatRed();
+  flashRed();
 });
 
 client.on("error", () => {
   console.log("MQTT error");
-
-  if (heartbeatTimer) {
-    clearInterval(heartbeatTimer);
-    heartbeatTimer = null;
-  }
-
-  flashHeartbeatRed();
+  flashRed();
 });
 
 // ------------------------------------------------------
-// MQTT INCOMING MESSAGE HANDLER
+// MQTT MESSAGE HANDLER
 // ------------------------------------------------------
 client.on("message", (topic, payload) => {
   const text = payload.toString();
-  console.log("RAW MQTT:", text);
+  console.log("MQTT:", topic, text);
 
- if (data.heartbeat !== undefined) {
-    lastHeartbeatTime = performance.now();
-    flashHeartbeatGreen();
-}
+  // -------------------------
+  // LWT STATUS
+  // -------------------------
+  if (topic === "test/esp32/status") {
+    if (text === "offline") flashRed();
+    return;
+  }
 
-
-
+  // -------------------------
+  // MAIN ESP32 OUT TOPIC
+  // -------------------------
   try {
     const data = JSON.parse(text);
-    console.log("MQTT update:", data);
 
+    // -------------------------
+    // HEARTBEAT RECEIVED
+    // -------------------------
+    if (data.heartbeat !== undefined) {
+      lastHeartbeatTime = performance.now();
+      flashGreen();
+      return;
+    }
+
+    // -------------------------
+    // FADER UPDATE
+    // -------------------------
     if (data.faderValue !== undefined) {
       faderValue = data.faderValue;
       handleY = map(faderValue, 0, 100, trackBottom, trackTop);
     }
 
   } catch (err) {
-    console.log("Non‑JSON MQTT message:", text);
+    console.log("Non‑JSON message:", text);
   }
 });
+
+// ------------------------------------------------------
+// HEARTBEAT TIMEOUT CHECK
+// ------------------------------------------------------
+setInterval(() => {
+  const now = performance.now();
+  if (now - lastHeartbeatTime > HEARTBEAT_TIMEOUT) {
+    flashRed();
+  }
+}, 1000);
 
 // ------------------------------------------------------
 // P5 SETUP
@@ -153,34 +131,25 @@ function setup() {
 
   c.parent("sketch-container");
 
-  // Prevent page scrolling while touching the canvas
   c.elt.addEventListener("touchstart", e => e.preventDefault(), { passive: false });
   c.elt.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
 
   handleY = map(faderValue, 0, 100, trackBottom, trackTop);
 
   // -------------------------------
-  // TOGGLE BUTTON SETUP
+  // TOGGLE BUTTON
   // -------------------------------
   const toggleBox = document.getElementById("toggleButton-display");
-
   toggleBox.style.background = myGrey;
   toggleBox.textContent = "OFF";
 
   toggleBox.addEventListener("click", () => {
     toggleState = !toggleState;
 
-    if (toggleState) {
-      toggleBox.style.background = myOliveGreen.toString();
-      toggleBox.textContent = "ON";
-    } else {
-      toggleBox.style.background = myGrey;
-      toggleBox.textContent = "OFF";
-    }
+    toggleBox.style.background = toggleState ? myOliveGreen.toString() : myGrey;
+    toggleBox.textContent = toggleState ? "ON" : "OFF";
 
-    client.publish("test/esp32/in", JSON.stringify({
-      toggleState: toggleState
-    }));
+    client.publish("test/esp32/in", JSON.stringify({ toggleState }));
   });
 }
 
@@ -190,51 +159,37 @@ function setup() {
 function draw() {
   clear();
 
-  // Track
   noStroke();
   fill(myGrey);
   rect(73, trackTop, 10, trackBottom - trackTop);
 
-  // Colours based on toggle
   let handleColor = toggleState ? myOliveGreen : myGrey;
   let valueColor = toggleState ? myOliveGreen : myGrey;
 
-  // Handle
   stroke(0);
   strokeWeight(2);
   fill(handleColor);
   rect(43, handleY - handleHeight / 2, 68, handleHeight, 10);
 
-  // Value text
   const valueBox = document.getElementById("value-display");
   valueBox.textContent = faderValue;
   valueBox.style.color = valueColor.toString();
 
-  // Light confirm colour
   lightConfirm = faderValue;
-  let myGrey2 = color(myGrey);
-  let brightYellow = color(255, 255, 150);
-  let confirmColor = lerpColor(myGrey2, brightYellow, lightConfirm / 100);
+  let confirmColor = lerpColor(color(myGrey), color(255, 255, 150), lightConfirm / 100);
+  document.getElementById("lightConfirm-display").style.background = confirmColor.toString();
 
-  const confirmBox = document.getElementById("lightConfirm-display");
-  confirmBox.style.background = confirmColor.toString();
-
-  // Dragging logic
   if (dragging) {
     let y = getPointerY();
     handleY = constrain(y, trackTop, trackBottom);
     faderValue = Math.round(map(handleY, trackBottom, trackTop, 0, 100));
-    lightConfirm = faderValue;
   }
 }
 
 // ------------------------------------------------------
 // INPUT HANDLERS
 // ------------------------------------------------------
-function mousePressed() {
-  startDrag(mouseX, mouseY);
-}
-
+function mousePressed() { startDrag(mouseX, mouseY); }
 function mouseReleased() {
   dragging = false;
   client.publish("test/esp32/in", JSON.stringify({ faderValue }));
@@ -251,15 +206,9 @@ function touchEnded() {
 }
 
 function startDrag(x, y) {
-  if (
-    x > 30 &&
-    x < 125 &&
-    y > handleY - handleHeight / 2 &&
-    y < handleY + handleHeight / 2
-  ) {
+  if (x > 30 && x < 125 && y > handleY - handleHeight / 2 && y < handleY + handleHeight / 2) {
     dragging = true;
-  }
-  else if (x > 30 && x < 125 && y > trackTop && y < trackBottom) {
+  } else if (x > 30 && x < 125 && y > trackTop && y < trackBottom) {
     dragging = true;
     handleY = y;
     faderValue = Math.round(map(handleY, trackBottom, trackTop, 0, 100));
@@ -267,6 +216,5 @@ function startDrag(x, y) {
 }
 
 function getPointerY() {
-  if (touches.length > 0) return touches[0].y;
-  return mouseY;
+  return touches.length > 0 ? touches[0].y : mouseY;
 }
