@@ -24,6 +24,13 @@ const client = mqtt.connect("wss://h2818280.ala.asia-southeast1.emqxsl.com:8084/
 client.on("connect", () => {
   console.log("MQTT connected");
   client.subscribe("test/esp32/out");
+
+   // Start heartbeat
+  setInterval(() => {
+    client.publish("test/esp32/in", JSON.stringify({ heartbeat: true }));
+    flashHeartbeatLED();
+  }, 2000);
+
 });
 
 
@@ -46,6 +53,19 @@ client.on("message", (topic, payload) => {
     console.log("Non‑JSON MQTT message:", text);
   }
 });
+
+// This flashes the green led to show heartbeat from the esp32
+function flashHeartbeatLED() {
+  const led = document.getElementById("heartbeat-led");
+
+  // Turn it ON
+  led.style.background = "rgb(0, 200, 0)";
+
+  // Turn it OFF after 120ms
+  setTimeout(() => {
+    led.style.background = "rgb(80, 80, 80)";  // or whatever your "off" colour is
+  }, 120);
+}
 
 
 
