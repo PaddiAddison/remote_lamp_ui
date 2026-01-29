@@ -98,6 +98,21 @@ client.on("message", (topic, payload) => {
       return;
     }
 
+
+    // lightConfirm phototransistor value recieved
+    if (data.lightConfirm !== undefined) {
+    lightConfirm = data.lightConfirm;
+
+    // Update the UI colour box
+    let confirmColor = lerpColor(
+        color(myGrey),
+        color(255, 255, 150),
+        lightConfirm / 100
+    );
+    document.getElementById("lightConfirm-display").style.background = confirmColor.toString();
+}
+
+
     // -------------------------
     // FADER UPDATE
     // -------------------------
@@ -176,7 +191,7 @@ function draw() {
   valueBox.textContent = faderValue;
   valueBox.style.color = valueColor.toString();
 
-  lightConfirm = faderValue;
+  
   let confirmColor = lerpColor(color(myGrey), color(255, 255, 150), lightConfirm / 100);
   document.getElementById("lightConfirm-display").style.background = confirmColor.toString();
 
