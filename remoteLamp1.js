@@ -95,11 +95,11 @@ client.on("message", (topic, payload) => {
     if (data.heartbeat !== undefined) {
       lastHeartbeatTime = performance.now();
       flashGreen();
-      return;
+      
     }
 
 
-    // lightConfirm phototransistor value recieved
+    // lightConfirm phototransistor value received
     if (data.lightConfirm !== undefined) {
     lightConfirm = data.lightConfirm;
 
@@ -111,6 +111,7 @@ client.on("message", (topic, payload) => {
     );
     document.getElementById("lightConfirm-display").style.background = confirmColor.toString();
 }
+
 
 
     // -------------------------
