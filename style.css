@@ -114,3 +114,21 @@ html, body {
   pointer-events: none;
   z-index: 50;       /* above canvas */
 }
+
+#heartbeat-led {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.led-off {
+  background: rgb(80, 80, 80) !important;
+}
+
+.led-green {
+  background: rgb(63, 255, 63) !important;
+}
+
+.led-red {
+  background: rgb(255, 63, 63) !important;
+}

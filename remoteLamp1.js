@@ -20,7 +20,6 @@ let esp32Online = true;
 let uiJustBecameInactiveAt = 0;
 const UI_IDLE_COOLDOWN_MS = 300;
 
-
 // ------------------------------------------------------
 // MQTT CLIENT SETUP
 // ------------------------------------------------------
@@ -31,18 +30,18 @@ const client = mqtt.connect("wss://h2818280.ala.asia-southeast1.emqxsl.com:8084/
 });
 
 // ------------------------------------------------------
-// LED FLASH FUNCTIONS
+// LED FLASH FUNCTIONS (CSS class‑based, immune to draw loop)
 // ------------------------------------------------------
 function flashGreen() {
   const led = document.getElementById("heartbeat-led");
-  led.style.background = "rgb(0, 200, 0)";
-  setTimeout(() => led.style.background = "rgb(80, 80, 80)", 120);
+  led.className = "led-green";
+  setTimeout(() => led.className = "led-off", 200);
 }
 
 function flashRed() {
   const led = document.getElementById("heartbeat-led");
-  led.style.background = "rgb(255, 63, 63)";
-  setTimeout(() => led.style.background = "rgb(80, 80, 80)", 200);
+  led.className = "led-red";
+  setTimeout(() => led.className = "led-off", 300);
 }
 
 // ------------------------------------------------------
@@ -81,67 +80,65 @@ client.on("message", (topic, payload) => {
   // -------------------------
   if (topic === "test/esp32/status") {
     if (text === "offline") {
-        esp32Online = false;
-        flashRed();
+      esp32Online = false;
+      flashRed();
     } else if (text === "online") {
-        esp32Online = true;
+      esp32Online = true;
     }
     return;
-}
-
+  }
 
   // -------------------------
   // MAIN ESP32 OUT TOPIC
   // -------------------------
-try {
-  const data = JSON.parse(text);
+  try {
+    const data = JSON.parse(text);
 
     // -------------------------
-  // lightConfirm phototransistor value received
-  // -------------------------
-  if (data.lightConfirm !== undefined) {
-    lightConfirm = data.lightConfirm;
+    // lightConfirm phototransistor value received
+    // -------------------------
+    if (data.lightConfirm !== undefined) {
+      lightConfirm = data.lightConfirm;
 
-    let confirmColor = lerpColor(
-      color(50, 50, 50),
-      color(255, 255, 0),
-      lightConfirm / 100
-    );
-    document.getElementById("lightConfirm-display").style.background =
-      confirmColor.toString();
+      let confirmColor = lerpColor(
+        color(50, 50, 50),
+        color(255, 255, 0),
+        lightConfirm / 100
+      );
+      document.getElementById("lightConfirm-display").style.background =
+        confirmColor.toString();
+    }
+
+    // -------------------------
+    // FADER UPDATE
+    // -------------------------
+    if (data.faderValue !== undefined) {
+      faderValue = data.faderValue;
+      handleY = map(faderValue, 0, 100, trackBottom, trackTop);
+    }
+
+    // -------------------------
+    // IDLE FLASH LOGIC
+    // -------------------------
+    if (
+      !uiActive &&
+      !dragging &&
+      data.mode === "idle" &&
+      performance.now() - uiJustBecameInactiveAt > UI_IDLE_COOLDOWN_MS
+    ) {
+      if (esp32Online) {
+        flashGreen();
+      } else {
+        flashRed();
+      }
+    }
+
+  } catch (err) {
+    console.log("Non‑JSON message:", text);
   }
-
-  // -------------------------
-  // FADER UPDATE
-  // -------------------------
-   // ⭐ After updating UI values, flash LED ONLY on idle JSON
-// ⭐ Only flash idle heartbeat when:
-// - UI is not active
-// - fader is not being dragged
-// - message is idle
-// - cooldown has passed
-if (
-  !uiActive &&
-  !dragging &&
-  data.mode === "idle" &&
-  performance.now() - uiJustBecameInactiveAt > UI_IDLE_COOLDOWN_MS
-) {
-  if (esp32Online) {
-    flashGreen();
-  } else {
-    flashRed();
-  }
-}
-
-
-
-
-} catch (err) {
-  console.log("Non‑JSON message:", text);
-}
 });
 
-//------------------------------------------------------
+// ------------------------------------------------------
 // P5 SETUP
 // ------------------------------------------------------
 function setup() {
@@ -154,9 +151,7 @@ function setup() {
   c.elt.addEventListener("touchstart", e => e.preventDefault(), { passive: false });
   c.elt.addEventListener("touchmove", e => e.preventDefault(), { passive: false });
   c.elt.style.touchAction = "none";
-c.elt.style.pointerEvents = "auto";
-
-
+  c.elt.style.pointerEvents = "auto";
 
   handleY = map(faderValue, 0, 100, trackBottom, trackTop);
 
@@ -175,9 +170,6 @@ c.elt.style.pointerEvents = "auto";
 
     client.publish("test/esp32/in", JSON.stringify({ toggleState }));
   });
-
- 
-
 }
 
 // ------------------------------------------------------
@@ -202,7 +194,6 @@ function draw() {
   valueBox.textContent = faderValue;
   valueBox.style.color = valueColor.toString();
 
-  
   let confirmColor = lerpColor(color(myGrey), color(255, 255, 150), lightConfirm / 100);
   document.getElementById("lightConfirm-display").style.background = confirmColor.toString();
 
@@ -210,26 +201,23 @@ function draw() {
     let y = getPointerY();
     handleY = constrain(y, trackTop, trackBottom);
     faderValue = Math.round(map(handleY, trackBottom, trackTop, 0, 100));
-}
+  }
 
-publishDuringDrag();   // always runs
+  publishDuringDrag();
 }
 
 // ------------------------------------------------------
 // INPUT HANDLERS
 // ------------------------------------------------------
-// ------------------------------------------------------
-// REAL-TIME UI ACTIVITY + INPUT HANDLERS
-// ------------------------------------------------------
-
 let lastSentFaderValue = null;
 
 // Tell ESP32 when UI becomes active/inactive
 function setUiActive(active) {
- if (!active) {
+  if (!active) {
     uiJustBecameInactiveAt = performance.now();
   }
 
+  uiActive = active;
   client.publish("test/esp32/ui_active", active ? "1" : "0");
 }
 
@@ -281,12 +269,10 @@ function startDrag(x, y) {
 
 // -------------------------
 // REAL-TIME PUBLISHING DURING DRAG
-// (called every frame inside draw())
 // -------------------------
 function publishDuringDrag() {
   if (!dragging) return;
 
-  // Only publish when value changes
   if (faderValue !== lastSentFaderValue) {
     client.publish("test/esp32/in", JSON.stringify({ faderValue }));
     lastSentFaderValue = faderValue;
