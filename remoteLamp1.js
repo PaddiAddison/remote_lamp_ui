@@ -108,17 +108,20 @@ try {
   // FADER UPDATE
   // -------------------------
    // ⭐ After updating UI values, flash LED ONLY on idle JSON
-// ⭐ Only flash if:
-// - UI is inactive
+// ⭐ Only flash idle heartbeat when:
+// - UI is not active
+// - fader is not being dragged
 // - message is idle
-// - cool‑down period has passed
+// - cooldown has passed
 if (
   !uiActive &&
+  !dragging &&
   data.mode === "idle" &&
   performance.now() - uiJustBecameInactiveAt > UI_IDLE_COOLDOWN_MS
 ) {
   flashGreen();
 }
+
 
 
 } catch (err) {
