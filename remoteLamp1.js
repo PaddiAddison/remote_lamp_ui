@@ -95,6 +95,11 @@ client.on("message", (topic, payload) => {
     // HEARTBEAT RECEIVED
     // -------------------------
     
+// ANY valid state message counts as a heartbeat now
+lastHeartbeatTime = performance.now();
+flashGreen();
+
+
     // lightConfirm phototransistor value received
     if (data.lightConfirm !== undefined) {
     lightConfirm = data.lightConfirm;
