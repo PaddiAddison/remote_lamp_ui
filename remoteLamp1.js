@@ -20,7 +20,7 @@ let uiActive = false;
 // HEARTBEAT STATE
 // ------------------------------------------------------
 let lastHeartbeatTime = 0;   // updated ONLY when ESP32 sends heartbeat
-const HEARTBEAT_TIMEOUT = 6000; // ms
+const HEARTBEAT_TIMEOUT = 30000; // ms
 
 // ------------------------------------------------------
 // MQTT CLIENT SETUP
