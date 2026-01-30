@@ -89,9 +89,11 @@ client.on("message", (topic, payload) => {
   // MAIN ESP32 OUT TOPIC
   // -------------------------
 
-// ⭐ ANY message on test/esp32/out counts as a heartbeat now
-lastHeartbeatTime = performance.now();
+// ⭐ Only flash LED during idle mode (no dragging, no button press)
+if (!uiActive) {
+  // Green flash = system alive
 flashGreen();
+}
 
 try {
   const data = JSON.parse(text);
