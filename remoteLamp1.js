@@ -15,13 +15,6 @@ let toggleState = false;
 let lightConfirm = 0;
 let uiActive = false;
 
-
-// ------------------------------------------------------
-// HEARTBEAT STATE
-// ------------------------------------------------------
-let lastHeartbeatTime = 0;   // updated ONLY when ESP32 sends heartbeat
-const HEARTBEAT_TIMEOUT = 30000; // ms
-
 // ------------------------------------------------------
 // MQTT CLIENT SETUP
 // ------------------------------------------------------
@@ -125,17 +118,6 @@ try {
   console.log("Non‑JSON message:", text);
 }
 });
-
-// ------------------------------------------------------
-// HEARTBEAT TIMEOUT CHECK
-// ------------------------------------------------------
-setInterval(() => {
-  const now = performance.now();
-  if (now - lastHeartbeatTime > HEARTBEAT_TIMEOUT) {
-    flashRed();
-  }
-}, 1000);
-
 
 //------------------------------------------------------
 // P5 SETUP
