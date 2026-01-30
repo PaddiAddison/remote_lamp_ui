@@ -15,6 +15,11 @@ let toggleState = false;
 let lightConfirm = 0;
 let uiActive = false;
 
+// ⭐ Cool‑down timer to prevent rapid idle flashes after interaction
+let uiJustBecameInactiveAt = 0;
+const UI_IDLE_COOLDOWN_MS = 300;
+
+
 // ------------------------------------------------------
 // MQTT CLIENT SETUP
 // ------------------------------------------------------
@@ -108,9 +113,18 @@ try {
   // FADER UPDATE
   // -------------------------
    // ⭐ After updating UI values, flash LED ONLY on idle JSON
-if (!uiActive && data.mode === "idle") {
+// ⭐ Only flash if:
+// - UI is inactive
+// - message is idle
+// - cool‑down period has passed
+if (
+  !uiActive &&
+  data.mode === "idle" &&
+  performance.now() - uiJustBecameInactiveAt > UI_IDLE_COOLDOWN_MS
+) {
   flashGreen();
 }
+
 
 } catch (err) {
   console.log("Non‑JSON message:", text);
@@ -202,8 +216,10 @@ let lastSentFaderValue = null;
 
 // Tell ESP32 when UI becomes active/inactive
 function setUiActive(active) {
-  if (uiActive === active) return;
-  uiActive = active;
+ if (!active) {
+    uiJustBecameInactiveAt = performance.now();
+  }
+
   client.publish("test/esp32/ui_active", active ? "1" : "0");
 }
 
