@@ -283,6 +283,7 @@ function mouseReleased() {
   if (dragging) {
     dragging = false;
     setUiActive(false);
+    faderReleaseAt = performance.now();
     client.publish("test/esp32/in", JSON.stringify({ faderValue }));
   }
 }
@@ -300,6 +301,7 @@ function touchEnded() {
   if (dragging) {
     dragging = false;
     setUiActive(false);
+    faderReleaseAt = performance.now();
     client.publish("test/esp32/in", JSON.stringify({ faderValue }));
   }
 }
