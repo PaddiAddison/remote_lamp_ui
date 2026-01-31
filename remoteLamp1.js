@@ -147,12 +147,16 @@ client.on("message", (topic, payload) => {
     }
 
     // -------------------------
-    // FADER UPDATE
-    // -------------------------
-    if (data.faderValue !== undefined) {
-      faderValue = data.faderValue;
-      handleY = map(faderValue, 0, 100, trackBottom, trackTop);
-    }
+// FADER UPDATE (ignore while dragging)
+// -------------------------
+if (data.faderValue !== undefined) {
+  if (!uiActive && !dragging) {
+    // Only accept remote updates when the user is NOT dragging
+    faderValue = data.faderValue;
+    handleY = map(faderValue, 0, 100, trackBottom, trackTop);
+  }
+}
+
 
     // -------------------------
     // IDLE FLASH LOGIC
