@@ -15,6 +15,8 @@ let toggleState = false;
 let lightConfirm = 0;
 let uiActive = false;
 let esp32Online = true;
+let offlineFlashInterval = null;
+
 
 // ⭐ Cool‑down timer to prevent rapid idle flashes after interaction
 let uiJustBecameInactiveAt = 0;
@@ -89,14 +91,38 @@ client.on("message", (topic, payload) => {
   // LWT STATUS
   // -------------------------
   if (topic === "test/esp32/status") {
-    if (text === "offline") {
-      esp32Online = false;
-      flashRed();
-    } else if (text === "online") {
-      esp32Online = true;
+  if (text === "offline") {
+    esp32Online = false;
+
+    // Flash immediately
+    flashRed();
+
+    // Start repeating offline flash if not already running
+    if (!offlineFlashInterval) {
+      offlineFlashInterval = setInterval(() => {
+        if (!esp32Online) {
+          flashRed();
+        }
+      }, 5000); // every 5 seconds
     }
-    return;
+
+  } else if (text === "online") {
+    esp32Online = true;
+
+    // Stop offline flashing
+    if (offlineFlashInterval) {
+      clearInterval(offlineFlashInterval);
+      offlineFlashInterval = null;
+    }
+
+    // Return LED to off state
+    const led = document.getElementById("heartbeat-led");
+    led.classList.remove("led-green", "led-red");
+    led.classList.add("led-off");
   }
+
+  return;
+}
 
   // -------------------------
   // MAIN ESP32 OUT TOPIC
