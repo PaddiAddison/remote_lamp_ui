@@ -24,7 +24,7 @@ const UI_IDLE_COOLDOWN_MS = 300;
 
 // Cool-down for releasing the fader
 let faderReleaseAt = 0;
-const FADER_RELEASE_COOLDOWN_MS = 150;
+const FADER_RELEASE_COOLDOWN_MS = 500;
 
 
 // ------------------------------------------------------
@@ -150,6 +150,18 @@ client.on("message", (topic, payload) => {
       document.getElementById("lightConfirm-display").style.background =
         confirmColor.toString();
     }
+
+    // -------------------------
+// TOGGLE UPDATE
+// -------------------------
+if (data.toggleState !== undefined) {
+  toggleState = data.toggleState;
+
+  const toggleBox = document.getElementById("toggleButton-display");
+  toggleBox.style.background = toggleState ? myOliveGreen.toString() : myGrey;
+  toggleBox.textContent = toggleState ? "ON" : "OFF";
+}
+
 
    // -------------------------
 // FADER UPDATE (ignore while dragging or just after release)
