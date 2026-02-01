@@ -1,3 +1,5 @@
+/* REMOTE_LAMP_RELEASE_V1 1/2/2026*/
+
 /* Global layout */
 html, body {
   margin: 0;
@@ -6,6 +8,7 @@ html, body {
   background: rgb(65, 87, 27);
 }
 
+/*Define my colours*/
 :root {
   --myOliveGreen: rgb(65, 87, 27);
   --myContainers: rgb(255, 255, 255);
@@ -98,20 +101,7 @@ html, body {
   pointer-events: auto; /* allow clicking */
 }
 
-/* Transparent overlay grid */
-/*#tempGrid-display {
-  position: absolute;
-  left: 50px;
-  top: 50px;
-  width: 200px;
-  height: 550px;
-  background: transparent;
-  border: 0;
-  pointer-events: none;
-  z-index: 50;
-}*/
-
-/* HEARTBEAT LED — now fully isolated and always visible */
+/* HEARTBEAT LED  */
 #heartbeat-led {
   position: absolute;
   left: 205px;
@@ -122,8 +112,7 @@ html, body {
   border-radius: 50%;
   z-index: 999999 !important; /* ABOVE EVERYTHING */
   pointer-events: none;
-  /* No background here — LED color is controlled by classes */
-}
+  }
 
 /* LED states */
 .led-off {
@@ -138,6 +127,7 @@ html, body {
   background: rgb(255, 63, 63) !important;
 }
 
+/*Version info text at the bottom*/
 #version_info {
   font-family: sans-serif;
   font-size: x-small;
